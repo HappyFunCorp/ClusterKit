@@ -60,7 +60,7 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to);
 
 /**
  Instantiates a cluster at the given coordinate.
- 
+
  @param coordinate The cluster coordinate.
  @return The newly-initialized cluster.
  */+ (__kindof CKCluster *)clusterWithCoordinate:(CLLocationCoordinate2D)coordinate;
@@ -94,16 +94,18 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to);
  */
 @property (nonatomic, readonly, nullable) id<CKAnnotation> lastAnnotation;
 
+- (NSArray<id<CKAnnotation>> *)annotations;
+
 /**
  Adds a given annotation to the cluster, if it is not already a member.
- 
+
  @param annotation The annotation to add.
  */
 - (void)addAnnotation:(id<CKAnnotation>)annotation;
 
 /**
  Removes a given annotation from the cluster.
- 
+
  @param annotation The annotation to remove.
  */
 - (void)removeAnnotation:(id<CKAnnotation>)annotation;
@@ -138,6 +140,8 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to);
  @return The annotation located at index.
  */
 - (id<CKAnnotation>)objectAtIndexedSubscript:(NSUInteger)index;
+
+- (void)copyClusterValues:(CKCluster *)cluster;
 
 @end
 

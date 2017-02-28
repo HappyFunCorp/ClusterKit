@@ -86,6 +86,14 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to) {
     return [_annotations containsObject:annotation];
 }
 
+- (void)copyClusterValues:(CKCluster *)cluster {
+    self.coordinate = cluster.coordinate;
+    _annotations = [NSMutableArray array];
+    for (id<CKAnnotation> annotation in [cluster annotations]) {
+        [self addAnnotation:annotation];
+    }
+}
+
 #pragma mark <CKCluster>
 
 + (CKCluster *)clusterWithCoordinate:(CLLocationCoordinate2D)coordinate {
@@ -128,7 +136,7 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to) {
 - (void)removeAnnotation:(id<CKAnnotation>)annotation {
     if (annotation.cluster == self) {
         [super removeAnnotation:annotation];
-        
+
         self.coordinate = [self coordinateByRemovingAnnotation:annotation];
     }
 }
@@ -137,12 +145,12 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to) {
     if (self.count < 2) {
         return annotation.coordinate;
     }
-    
+
     CLLocationDegrees latitude = self.coordinate.latitude * (self.count - 1);
     CLLocationDegrees longitude = self.coordinate.longitude * (self.count - 1);
     latitude += annotation.coordinate.latitude;
     longitude += annotation.coordinate.longitude;
-    
+
     return CLLocationCoordinate2DMake(latitude / self.count, longitude / self.count);
 }
 
@@ -150,12 +158,12 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to) {
     if (self.count < 1) {
         return kCLLocationCoordinate2DInvalid;
     }
-    
+
     CLLocationDegrees latitude = self.coordinate.latitude * (self.count + 1);
     CLLocationDegrees longitude = self.coordinate.longitude * (self.count + 1);
     latitude -= annotation.coordinate.latitude;
     longitude -= annotation.coordinate.longitude;
-    
+
     return CLLocationCoordinate2DMake(latitude / self.count, longitude / self.count);
 }
 
@@ -170,7 +178,7 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to) {
     if (annotation.cluster != self) {
         [_annotations addObject:annotation];
         annotation.cluster = self;
-        
+
         _center = [self coordinateByAddingAnnotation:annotation];
         self.coordinate = [self coordinateByDistanceSort];
     }
@@ -180,7 +188,7 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to) {
     if (annotation.cluster == self) {
         [_annotations removeObject:annotation];
         annotation.cluster = nil;
-        
+
         _center = [self coordinateByRemovingAnnotation:annotation];
         self.coordinate = [self coordinateByDistanceSort];
     }
@@ -194,7 +202,7 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to) {
         if (d1 < d2) return NSOrderedAscending;
         return NSOrderedSame;
     }];
-    
+
     return _annotations.firstObject.coordinate;
 }
 
@@ -212,9 +220,9 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to) {
                                        if (obj1.coordinate.latitude < obj2.coordinate.latitude) return NSOrderedAscending;
                                        return NSOrderedSame;
                                    }];
-        
+
         [_annotations insertObject:annotation atIndex:index];
-        
+
         self.coordinate = _annotations.firstObject.coordinate;
     }
 }
@@ -223,7 +231,7 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to) {
     if (annotation.cluster == self) {
         [_annotations removeObject:annotation];
         annotation.cluster = nil;
-        
+
         self.coordinate = _annotations.firstObject.coordinate;
     }
 }

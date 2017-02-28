@@ -51,7 +51,7 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
         self.animationDuration = .5;
         self.animationOptions = UIViewAnimationOptionCurveEaseOut;
         _clusters = [NSMutableArray new];
-        
+
         _queue = dispatch_queue_create("com.hulab.cluster", DISPATCH_QUEUE_CONCURRENT);
     }
     return self;
@@ -64,15 +64,15 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
 
 - (void)updateClustersIfNeeded {
     if (!self.map) return;
-    
+
     MKMapRect visibleMapRect = self.map.visibleMapRect;
-    
+
     // Zoom update
     if (fabs(self.visibleMapRect.size.width - visibleMapRect.size.width) > 0.1f) {
         [self updateMapRect:visibleMapRect animated:(self.animationDuration > 0)];
-        
+
     } else if (self.marginFactor != kCKMarginFactorWorld) {
-        
+
         // Translation update
         if(fabs(self.visibleMapRect.origin.x - visibleMapRect.origin.x) > self.visibleMapRect.size.width * self.marginFactor / 2||
            fabs(self.visibleMapRect.origin.y - visibleMapRect.origin.y) > self.visibleMapRect.size.height* self.marginFactor / 2 ) {
@@ -83,9 +83,9 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
 
 - (void)updateClusters {
     if (!self.map) return;
-    
+
     MKMapRect visibleMapRect = self.map.visibleMapRect;
-    
+
     BOOL animated = (self.animationDuration > 0) && fabs(self.visibleMapRect.size.width - visibleMapRect.size.width) > 0.1f;
     [self updateMapRect:visibleMapRect animated:animated];
 }
@@ -131,7 +131,7 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
 
 - (void)selectAnnotation:(nullable id<CKAnnotation>)annotation animated:(BOOL)animated {
     CKCluster *cluster = nil;
-    
+
     if (annotation) {
         if (!annotation.cluster || annotation.cluster.count > 1) {
             cluster = [self.algorithm clusterWithCoordinate:annotation.coordinate];
@@ -169,70 +169,88 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
 #pragma mark - Private
 
 - (void)updateMapRect:(MKMapRect)visibleMapRect animated:(BOOL)animated {
-    
+
     if (! self.tree || MKMapRectIsNull(visibleMapRect) || MKMapRectIsEmpty(visibleMapRect)) {
         return;
     }
-    
+
     MKMapRect clusterMapRect = MKMapRectWorld;
     if (self.marginFactor != kCKMarginFactorWorld) {
         clusterMapRect = MKMapRectInset(visibleMapRect,
                                         -self.marginFactor * visibleMapRect.size.width,
                                         -self.marginFactor * visibleMapRect.size.height);
     }
-    
+
     double zoom = self.map.zoom;
     CKClusterAlgorithm *algorithm = (zoom < self.maxZoomLevel)? self.algorithm : [CKClusterAlgorithm new];
     NSArray *clusters = [algorithm clustersInRect:clusterMapRect zoom:zoom tree:self.tree];
-    
+    NSMutableArray *toReplace = clusters.mutableCopy;
     NSMutableArray *toRemove = _clusters.mutableCopy;
-    
+
+    [clusters enumerateObjectsUsingBlock:^(CKCluster *newCluster, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (self.highlightedAnnotation && [newCluster containsAnnotation:self.highlightedAnnotation]) {
+            for (CKCluster *oldCluster in _clusters) {
+                if ([oldCluster containsAnnotation:self.highlightedAnnotation]) {
+                    [toRemove removeObject: oldCluster];
+                    [oldCluster copyClusterValues:newCluster];
+                    toReplace[idx] = oldCluster;
+                    break;
+                }
+            }
+            [self.delegate clusterManager:self highlighted:newCluster];
+        } else {
+            [self.map addCluster:newCluster];
+        }
+
+    }];
+    /*
     for (CKCluster *newCluster in clusters) {
-        
+
         [self.map addCluster:newCluster];
-        
+
         if (!MKMapRectContainsPoint(visibleMapRect, MKMapPointForCoordinate(newCluster.coordinate)) ||
             !animated) {
             continue;
         }
-        
+
         for (CKCluster *oldCluster in _clusters) {
-            
+
             if (!MKMapRectContainsPoint(clusterMapRect, MKMapPointForCoordinate(oldCluster.coordinate))) {
                 continue;
             }
-            
+
             if (CLLocationCoordinateEqual(newCluster.coordinate, oldCluster.coordinate)) {
                 continue;
             }
-            
+
             if ([oldCluster containsAnnotation:newCluster.firstAnnotation]) {
-                
+
                 [self.map moveCluster:newCluster
                                  from:oldCluster.coordinate
                                    to:newCluster.coordinate
                            completion:^(BOOL finished) {
                            }];
-                
+
             } else if ([newCluster containsAnnotation:oldCluster.firstAnnotation]) {
-                
+
                 [self.map moveCluster:oldCluster
                                  from:oldCluster.coordinate
                                    to:newCluster.coordinate
                            completion:^(BOOL finished) {
                                [self.map removeCluster:oldCluster];
                            }];
-                
+
                 [toRemove removeObject:oldCluster];
             }
         }
     }
-    
+    */
+
     for (CKCluster *cluster in toRemove) {
         [self.map removeCluster:cluster];
     }
-    
-    _clusters = clusters.mutableCopy;
+
+    _clusters = toReplace.mutableCopy;
     _visibleMapRect = visibleMapRect;
 }
 

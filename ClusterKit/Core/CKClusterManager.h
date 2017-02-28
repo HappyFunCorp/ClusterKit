@@ -41,23 +41,24 @@ FOUNDATION_EXTERN const double kCKMarginFactorWorld;
 
 /**
  Asks the delegate if the cluster manager should clusterized the given annotation.
- 
+
  @param clusterManager The cluster manager object requesting this information.
  @param annotation         The annotation to clusterized.
- 
+
  @return Yes to permit clusterization of the given annotation.
  */
 - (BOOL)clusterManager:(CKClusterManager *)clusterManager shouldClusterAnnotation:(id<CKAnnotation>)annotation;
 
 /**
  Tells the delegate to perform an animation.
- 
+
  @param clusterManager The cluster manager object requesting the animation.
  @param animations     A block object containing the animation. This block takes no parameters and has no return value. This parameter must not be NULL.
  @param completion     A block object to be executed when the animation sequence ends. This block has no return value and takes a single Boolean argument that indicates whether or not the animations actually finished before the completion handler was called. If the duration of the animation is 0, this block is performed at the beginning of the next run loop cycle. This parameter may be NULL.
  */
 - (void)clusterManager:(CKClusterManager *)clusterManager performAnimations:(void (^)(void))animations completion:(void (^ __nullable)(BOOL finished))completion;
 
+- (void)clusterManager:(CKClusterManager *)clusterManager highlighted:(CKCluster *)cluster;
 @end
 
 @interface CKClusterManager : NSObject
@@ -91,6 +92,7 @@ FOUNDATION_EXTERN const double kCKMarginFactorWorld;
  The currently selected annotation.
  */
 @property (nonatomic,readonly) id<CKAnnotation> selectedAnnotation;
+@property (nonatomic, strong, nullable) id<CKAnnotation> highlightedAnnotation;
 
 /**
  The current cluster array.
@@ -114,42 +116,42 @@ FOUNDATION_EXTERN const double kCKMarginFactorWorld;
 
 /**
  Adds an annotation.
- 
+
  @param annotation The annotation to add.
  */
 - (void)addAnnotation:(id<CKAnnotation>)annotation;
 
 /**
  Adds annotations.
- 
+
  @param annotations Annotations to add.
  */
 - (void)addAnnotations:(NSArray<id<CKAnnotation>> *)annotations;
 
 /**
  Removes an annotation.
- 
+
  @param annotation The annotation to remove.
  */
 - (void)removeAnnotation:(id<CKAnnotation>)annotation;
 
 /**
  Removes annotations.
- 
+
  @param annotations Annotations to remove.
  */
 - (void)removeAnnotations:(NSArray<id<CKAnnotation>> *)annotations;
 
 /**
  Selects an annotation. Look for the annotation in clusters and extract it if necessary.
- 
+
  @param annotation   The annotation to be selected.
  */
 - (void)selectAnnotation:(nullable id<CKAnnotation>)annotation animated:(BOOL)animated;
 
 /**
  Deselects an annotation.
- 
+
  @param annotation   The annotation to be deselected.
  */
 - (void)deselectAnnotation:(id<CKAnnotation>)annotation animated:(BOOL)animated;

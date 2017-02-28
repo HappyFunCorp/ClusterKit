@@ -21,23 +21,24 @@ Pod::Spec.new do |s|
   s.social_media_url = 'https://twitter.com/mapstr_app'
 
   s.platform     = :ios, '7.0'
+  s.tvos.deployment_target = '9.0'
   s.requires_arc = true
   s.default_subspecs = 'Core'
-  
+
   s.subspec 'Core' do |ss|
   	ss.frameworks = 'MapKit'
     ss.source_files = 'ClusterKit/ClusterKit.h', 'ClusterKit/Core/**/*.{h,m}'
   end
-  
+
   s.subspec 'MapKit' do |ss|
     ss.dependency 'ClusterKit/Core'
     ss.source_files = 'ClusterKit/MapKit'
   end
-  
+
 #  s.subspec 'GoogleMaps' do |ss|
 #    ss.dependency 'ClusterKit/Core'
 #    ss.dependency 'GoogleMaps', '~> 2.1'
 #    ss.source_files = 'ClusterKit/GoogleMaps'
 #  end
-  
+
 end
