@@ -169,24 +169,40 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
 #pragma mark - Private
 
 - (void)updateMapRect:(MKMapRect)visibleMapRect animated:(BOOL)animated {
-
+    
     if (! self.tree || MKMapRectIsNull(visibleMapRect) || MKMapRectIsEmpty(visibleMapRect)) {
         return;
     }
-
-    MKMapRect clusterMapRect = MKMapRectWorld;
-    if (self.marginFactor != kCKMarginFactorWorld) {
-        clusterMapRect = MKMapRectInset(visibleMapRect,
-                                        -self.marginFactor * visibleMapRect.size.width,
-                                        -self.marginFactor * visibleMapRect.size.height);
+    
+    NSMutableArray <CKCluster *>* clusters = [NSMutableArray new];
+    
+    if (MKMapRectSpans180thMeridian(visibleMapRect)) {
+        MKMapRect outsideMapRect = MKMapRectRemainder(visibleMapRect);
+        MKMapRect insideMapRect = MKMapRectIntersection(visibleMapRect, MKMapRectWorld);
+        [clusters addObjectsFromArray:[self createClustersInRect:outsideMapRect existingClusters:_clusters]];
+        [clusters addObjectsFromArray:[self createClustersInRect:insideMapRect existingClusters:_clusters]];
+    } else {
+        [clusters addObjectsFromArray:[self createClustersInRect:visibleMapRect existingClusters:_clusters]];
     }
 
+    _clusters = clusters;
+    _visibleMapRect = visibleMapRect;
+}
+
+- (NSMutableArray <CKCluster *>*)createClustersInRect:(MKMapRect)rect existingClusters:(NSArray <CKCluster *>*)existingClusters {
+    MKMapRect clusterMapRect = MKMapRectWorld;
+    if (self.marginFactor != kCKMarginFactorWorld) {
+        clusterMapRect = MKMapRectInset(rect,
+                                        self.marginFactor * rect.size.width,
+                                        self.marginFactor * rect.size.height);
+    }
+    
     double zoom = self.map.zoom;
     CKClusterAlgorithm *algorithm = (zoom < self.maxZoomLevel)? self.algorithm : [CKClusterAlgorithm new];
-    NSArray *clusters = [algorithm clustersInRect:clusterMapRect zoom:zoom tree:self.tree];
+    NSArray *clusters = [algorithm clustersInRect:rect zoom:zoom tree:self.tree];
     NSMutableArray *toReplace = clusters.mutableCopy;
-    NSMutableArray *toRemove = _clusters.mutableCopy;
-
+    NSMutableArray *toRemove = existingClusters.mutableCopy;
+    
     [clusters enumerateObjectsUsingBlock:^(CKCluster *newCluster, NSUInteger idx, BOOL * _Nonnull stop) {
         if (self.highlightedAnnotation && [newCluster containsAnnotation:self.highlightedAnnotation]) {
             for (CKCluster *oldCluster in _clusters) {
@@ -201,57 +217,14 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
         } else {
             [self.map addCluster:newCluster];
         }
-
+        
     }];
-    /*
-    for (CKCluster *newCluster in clusters) {
-
-        [self.map addCluster:newCluster];
-
-        if (!MKMapRectContainsPoint(visibleMapRect, MKMapPointForCoordinate(newCluster.coordinate)) ||
-            !animated) {
-            continue;
-        }
-
-        for (CKCluster *oldCluster in _clusters) {
-
-            if (!MKMapRectContainsPoint(clusterMapRect, MKMapPointForCoordinate(oldCluster.coordinate))) {
-                continue;
-            }
-
-            if (CLLocationCoordinateEqual(newCluster.coordinate, oldCluster.coordinate)) {
-                continue;
-            }
-
-            if ([oldCluster containsAnnotation:newCluster.firstAnnotation]) {
-
-                [self.map moveCluster:newCluster
-                                 from:oldCluster.coordinate
-                                   to:newCluster.coordinate
-                           completion:^(BOOL finished) {
-                           }];
-
-            } else if ([newCluster containsAnnotation:oldCluster.firstAnnotation]) {
-
-                [self.map moveCluster:oldCluster
-                                 from:oldCluster.coordinate
-                                   to:newCluster.coordinate
-                           completion:^(BOOL finished) {
-                               [self.map removeCluster:oldCluster];
-                           }];
-
-                [toRemove removeObject:oldCluster];
-            }
-        }
-    }
-    */
-
+    
     for (CKCluster *cluster in toRemove) {
         [self.map removeCluster:cluster];
     }
-
-    _clusters = toReplace.mutableCopy;
-    _visibleMapRect = visibleMapRect;
+    
+    return toReplace;
 }
 
 #pragma mark <KPAnnotationTreeDelegate>
