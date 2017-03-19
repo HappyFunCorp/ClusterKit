@@ -184,7 +184,11 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
     } else {
         [clusters addObjectsFromArray:[self createClustersInRect:visibleMapRect existingClusters:_clusters]];
     }
-
+    
+    for (CKCluster *cluster in _clusters) {
+        [self.map removeCluster:cluster];
+    }
+    
     _clusters = clusters;
     _visibleMapRect = visibleMapRect;
 }
@@ -219,10 +223,6 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
         }
         
     }];
-    
-    for (CKCluster *cluster in toRemove) {
-        [self.map removeCluster:cluster];
-    }
     
     return toReplace;
 }
