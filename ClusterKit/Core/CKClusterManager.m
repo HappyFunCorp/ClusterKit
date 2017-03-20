@@ -177,6 +177,7 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
     NSMutableArray <CKCluster *> *replacementClusters = [NSMutableArray new];
     NSMutableArray <CKCluster *> *deletionClusters = _clusters.mutableCopy;
     if (MKMapRectSpans180thMeridian(visibleMapRect)) {
+        // Divide the visible rect into 2 and cluster each rect separately.
         MKMapRect outsideMapRect = MKMapRectRemainder(visibleMapRect);
         MKMapRect insideMapRect = MKMapRectIntersection(visibleMapRect, MKMapRectWorld);
         [replacementClusters addObjectsFromArray:[self clustersInRect:outsideMapRect]];
@@ -201,7 +202,9 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
                 [cluster copyClusterValues:replacementCluster];
                 replacementClusters[replacementHiglightedIdx] = cluster;
                 
-                [self.delegate clusterManager:self highlighted:replacementCluster];
+                [self.delegate clusterManager:self highlighted:cluster];
+            } else {
+                [replacementClusters addObject:cluster];
             }
         }
     }
