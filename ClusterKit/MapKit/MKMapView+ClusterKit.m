@@ -60,8 +60,16 @@
     [self addAnnotation:cluster];
 }
 
+- (void)addClusters:(NSArray<CKCluster *> *)clusters {
+    [self addAnnotations:clusters];
+}
+
 - (void)removeCluster:(CKCluster *)cluster {
     [self removeAnnotation:cluster];
+}
+
+- (void)removeClusters:(NSArray<CKCluster *> *)clusters {
+    [self removeAnnotations:clusters];
 }
 
 - (void)moveCluster:(CKCluster *)cluster from:(CLLocationCoordinate2D)from to:(CLLocationCoordinate2D)to completion:(void (^__nullable)(BOOL finished))completion {

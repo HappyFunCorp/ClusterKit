@@ -72,6 +72,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param cluster The cluster object to add to the receiver.
  */
 - (void)addCluster:(CKCluster *)cluster;
+- (void)addClusters:(NSArray <CKCluster *>*)clusters;
 
 /**
  Removes the specified cluster object from the map.
@@ -79,6 +80,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param cluster The cluster object to remove.
  */
 - (void)removeCluster:(CKCluster *)cluster;
+- (void)removeClusters:(NSArray <CKCluster *>*)clusters;
 
 /**
  Moves the specified cluster on the map.

@@ -174,57 +174,52 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
         return;
     }
     
-    NSMutableArray <CKCluster *>* clusters = [NSMutableArray new];
-    
+    NSMutableArray <CKCluster *> *replacementClusters = [NSMutableArray new];
+    NSMutableArray <CKCluster *> *deletionClusters = _clusters.mutableCopy;
     if (MKMapRectSpans180thMeridian(visibleMapRect)) {
         MKMapRect outsideMapRect = MKMapRectRemainder(visibleMapRect);
         MKMapRect insideMapRect = MKMapRectIntersection(visibleMapRect, MKMapRectWorld);
-        [clusters addObjectsFromArray:[self createClustersInRect:outsideMapRect existingClusters:_clusters]];
-        [clusters addObjectsFromArray:[self createClustersInRect:insideMapRect existingClusters:_clusters]];
+        [replacementClusters addObjectsFromArray:[self clustersInRect:outsideMapRect]];
+        [replacementClusters addObjectsFromArray:[self clustersInRect:insideMapRect]];
     } else {
-        [clusters addObjectsFromArray:[self createClustersInRect:visibleMapRect existingClusters:_clusters]];
+        [replacementClusters addObjectsFromArray:[self clustersInRect:visibleMapRect]];
     }
     
-    for (CKCluster *cluster in _clusters) {
-        [self.map removeCluster:cluster];
+    if (self.highlightedAnnotation) {
+        NSUInteger highlightedIdx = [deletionClusters indexOfObjectPassingTest:^BOOL(CKCluster * _Nonnull cluster, NSUInteger idx, BOOL * _Nonnull stop) {
+            return [cluster containsAnnotation:self.highlightedAnnotation];
+        }];
+        CKCluster *cluster = deletionClusters[highlightedIdx];
+        [deletionClusters removeObjectAtIndex:highlightedIdx];
+        NSUInteger replacementHiglightedIdx = [replacementClusters indexOfObjectPassingTest:^BOOL(CKCluster * _Nonnull cluster, NSUInteger idx, BOOL * _Nonnull stop) {
+            return [cluster containsAnnotation:self.highlightedAnnotation];
+        }];
+        CKCluster *replacementCluster = replacementClusters[replacementHiglightedIdx];
+        [cluster copyClusterValues:replacementCluster];
+        replacementClusters[replacementHiglightedIdx] = cluster;
+        
+        [self.delegate clusterManager:self highlighted:replacementCluster];
     }
     
-    _clusters = clusters;
+    [self.map addClusters:replacementClusters];
+    [self.map removeClusters:deletionClusters];
+    
+    _clusters = replacementClusters;
     _visibleMapRect = visibleMapRect;
 }
 
-- (NSMutableArray <CKCluster *>*)createClustersInRect:(MKMapRect)rect existingClusters:(NSArray <CKCluster *>*)existingClusters {
+- (NSMutableArray <CKCluster *>*)clustersInRect:(MKMapRect)rect {
     MKMapRect clusterMapRect = MKMapRectWorld;
     if (self.marginFactor != kCKMarginFactorWorld) {
         clusterMapRect = MKMapRectInset(rect,
-                                        self.marginFactor * rect.size.width,
-                                        self.marginFactor * rect.size.height);
+                                        -self.marginFactor * rect.size.width,
+                                        -self.marginFactor * rect.size.height);
     }
     
     double zoom = self.map.zoom;
     CKClusterAlgorithm *algorithm = (zoom < self.maxZoomLevel)? self.algorithm : [CKClusterAlgorithm new];
     NSArray *clusters = [algorithm clustersInRect:rect zoom:zoom tree:self.tree];
-    NSMutableArray *toReplace = clusters.mutableCopy;
-    NSMutableArray *toRemove = existingClusters.mutableCopy;
-    
-    [clusters enumerateObjectsUsingBlock:^(CKCluster *newCluster, NSUInteger idx, BOOL * _Nonnull stop) {
-        if (self.highlightedAnnotation && [newCluster containsAnnotation:self.highlightedAnnotation]) {
-            for (CKCluster *oldCluster in _clusters) {
-                if ([oldCluster containsAnnotation:self.highlightedAnnotation]) {
-                    [toRemove removeObject: oldCluster];
-                    [oldCluster copyClusterValues:newCluster];
-                    toReplace[idx] = oldCluster;
-                    break;
-                }
-            }
-            [self.delegate clusterManager:self highlighted:newCluster];
-        } else {
-            [self.map addCluster:newCluster];
-        }
-        
-    }];
-    
-    return toReplace;
+    return clusters;
 }
 
 #pragma mark <KPAnnotationTreeDelegate>
