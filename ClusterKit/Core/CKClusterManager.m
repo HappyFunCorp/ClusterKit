@@ -189,16 +189,21 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
         NSUInteger highlightedIdx = [deletionClusters indexOfObjectPassingTest:^BOOL(CKCluster * _Nonnull cluster, NSUInteger idx, BOOL * _Nonnull stop) {
             return [cluster containsAnnotation:self.highlightedAnnotation];
         }];
-        CKCluster *cluster = deletionClusters[highlightedIdx];
-        [deletionClusters removeObjectAtIndex:highlightedIdx];
-        NSUInteger replacementHiglightedIdx = [replacementClusters indexOfObjectPassingTest:^BOOL(CKCluster * _Nonnull cluster, NSUInteger idx, BOOL * _Nonnull stop) {
-            return [cluster containsAnnotation:self.highlightedAnnotation];
-        }];
-        CKCluster *replacementCluster = replacementClusters[replacementHiglightedIdx];
-        [cluster copyClusterValues:replacementCluster];
-        replacementClusters[replacementHiglightedIdx] = cluster;
-        
-        [self.delegate clusterManager:self highlighted:replacementCluster];
+        if (highlightedIdx != NSNotFound) {
+            CKCluster *cluster = deletionClusters[highlightedIdx];
+            [deletionClusters removeObjectAtIndex:highlightedIdx];
+            
+            NSUInteger replacementHiglightedIdx = [replacementClusters indexOfObjectPassingTest:^BOOL(CKCluster * _Nonnull cluster, NSUInteger idx, BOOL * _Nonnull stop) {
+                return [cluster containsAnnotation:self.highlightedAnnotation];
+            }];
+            if (replacementHiglightedIdx != NSNotFound) {
+                CKCluster *replacementCluster = replacementClusters[replacementHiglightedIdx];
+                [cluster copyClusterValues:replacementCluster];
+                replacementClusters[replacementHiglightedIdx] = cluster;
+                
+                [self.delegate clusterManager:self highlighted:replacementCluster];
+            }
+        }
     }
     
     [self.map addClusters:replacementClusters];
