@@ -86,7 +86,7 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to);
  The first annotation in the cluster.
  If the cluster is empty, returns nil.
  */
-@property (nonatomic, readonly, nullable) id<CKAnnotation> firstAnnotation;
+@property (nonatomic, readwrite, nullable) id<CKAnnotation> firstAnnotation;
 
 /**
  The last annotation in the cluster.

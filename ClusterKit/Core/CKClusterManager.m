@@ -141,6 +141,7 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
             cluster = annotation.cluster;
         }
     }
+    
     [self setSelectedCluster:cluster animated:animated];
 }
 
@@ -216,7 +217,7 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
     _visibleMapRect = visibleMapRect;
 }
 
-- (NSMutableArray <CKCluster *>*)clustersInRect:(MKMapRect)rect {
+- (NSArray <CKCluster *>*)clustersInRect:(MKMapRect)rect {
     MKMapRect clusterMapRect = MKMapRectWorld;
     if (self.marginFactor != kCKMarginFactorWorld) {
         clusterMapRect = MKMapRectInset(rect,
@@ -226,7 +227,7 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
     
     double zoom = self.map.zoom;
     CKClusterAlgorithm *algorithm = (zoom < self.maxZoomLevel)? self.algorithm : [CKClusterAlgorithm new];
-    NSArray *clusters = [algorithm clustersInRect:rect zoom:zoom tree:self.tree];
+    NSArray <CKCluster *>*clusters = [algorithm clustersInRect:rect zoom:zoom tree:self.tree];
     return clusters;
 }
 
