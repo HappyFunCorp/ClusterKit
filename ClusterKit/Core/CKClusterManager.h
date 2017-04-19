@@ -91,7 +91,7 @@ FOUNDATION_EXTERN const double kCKMarginFactorWorld;
 /**
  The currently selected annotation.
  */
-@property (nonatomic,readonly) id<CKAnnotation> selectedAnnotation;
+@property (nonatomic, readonly, nullable) id<CKAnnotation> selectedAnnotation;
 @property (nonatomic, strong, nullable) id<CKAnnotation> highlightedAnnotation;
 
 /**
@@ -155,6 +155,8 @@ FOUNDATION_EXTERN const double kCKMarginFactorWorld;
  @param annotation   The annotation to be deselected.
  */
 - (void)deselectAnnotation:(id<CKAnnotation>)annotation animated:(BOOL)animated;
+
+- (void)removeSelectedCluster;
 
 /**
  Updates displayed clusters.

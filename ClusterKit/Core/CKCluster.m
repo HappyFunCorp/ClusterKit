@@ -58,11 +58,12 @@ double CKDistance(CLLocationCoordinate2D from, CLLocationCoordinate2D to) {
     return _annotations.firstObject;
 }
 
-- (void)setFirstAnnotation:(id<CKAnnotation>)firstAnnotation {
-    if ([self containsAnnotation:firstAnnotation]) {
-        [self removeAnnotation:firstAnnotation];
+- (void)setFirstAnnotation:(id<CKAnnotation>)annotation {
+    annotation.cluster = self;
+    if ([self containsAnnotation:annotation]) {
+        [self removeAnnotation:annotation];
     }
-    [_annotations insertObject:firstAnnotation atIndex:0];
+    [_annotations insertObject:annotation atIndex:0];
 }
 
 - (id<CKAnnotation>)lastAnnotation {

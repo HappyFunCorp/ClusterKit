@@ -141,7 +141,7 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
             cluster = annotation.cluster;
         }
     }
-    
+    self.highlightedAnnotation = annotation;
     [self setSelectedCluster:cluster animated:animated];
 }
 
@@ -167,6 +167,10 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
     _selectedCluster = selectedCluster;
 }
 
+- (void)removeSelectedCluster {
+    _selectedCluster = nil;
+}
+
 #pragma mark - Private
 
 - (void)updateMapRect:(MKMapRect)visibleMapRect animated:(BOOL)animated {
@@ -177,6 +181,17 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
     
     NSMutableArray <CKCluster *> *replacementClusters = [NSMutableArray new];
     NSMutableArray <CKCluster *> *deletionClusters = _clusters.mutableCopy;
+    
+    if (self.selectedCluster) {
+        // Check if the clusters already contain the highlighted annotation.  If not, add the selected cluster.
+        NSUInteger highlightedIdx = [deletionClusters indexOfObjectPassingTest:^BOOL(CKCluster * _Nonnull cluster, NSUInteger idx, BOOL * _Nonnull stop) {
+            return [cluster containsAnnotation:self.highlightedAnnotation];
+        }];
+        if (highlightedIdx == NSNotFound) {
+            [deletionClusters addObject:self.selectedCluster];
+        }
+    }
+    
     if (MKMapRectSpans180thMeridian(visibleMapRect)) {
         // Divide the visible rect into 2 and cluster each rect separately.
         MKMapRect outsideMapRect = MKMapRectRemainder(visibleMapRect);
@@ -202,7 +217,6 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
                 CKCluster *replacementCluster = replacementClusters[replacementHiglightedIdx];
                 [cluster copyClusterValues:replacementCluster];
                 replacementClusters[replacementHiglightedIdx] = cluster;
-                
                 [self.delegate clusterManager:self highlighted:cluster];
             } else {
                 [replacementClusters addObject:cluster];
