@@ -1,2 +1,6 @@
 xcuserdata
 Carthage
+
+Examples/Examples.xcworkspace/
+Examples/Podfile.lock
+Examples/Pods/
