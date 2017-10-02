@@ -192,15 +192,7 @@ BOOL CLLocationCoordinateEqual(CLLocationCoordinate2D coordinate1, CLLocationCoo
         }
     }
     
-    if (MKMapRectSpans180thMeridian(visibleMapRect)) {
-        // Divide the visible rect into 2 and cluster each rect separately.
-        MKMapRect outsideMapRect = MKMapRectRemainder(visibleMapRect);
-        MKMapRect insideMapRect = MKMapRectIntersection(visibleMapRect, MKMapRectWorld);
-        [replacementClusters addObjectsFromArray:[self clustersInRect:outsideMapRect]];
-        [replacementClusters addObjectsFromArray:[self clustersInRect:insideMapRect]];
-    } else {
-        [replacementClusters addObjectsFromArray:[self clustersInRect:visibleMapRect]];
-    }
+    [replacementClusters addObjectsFromArray:[self clustersInRect:visibleMapRect]];
     
     if (self.highlightedAnnotation) {
         NSUInteger highlightedIdx = [deletionClusters indexOfObjectPassingTest:^BOOL(CKCluster * _Nonnull cluster, NSUInteger idx, BOOL * _Nonnull stop) {

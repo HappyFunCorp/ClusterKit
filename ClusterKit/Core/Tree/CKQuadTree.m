@@ -223,6 +223,8 @@ void hb_qtree_find_in_range(hb_qtree_t *t, MKMapRect range , void(^find)(id<MKAn
     BOOL _responds;
 }
 
+static void * const CKQuadTreeKVOContext = (void *)&CKQuadTreeKVOContext;
+
 @synthesize delegate = _delegate;
 
 - (instancetype)init {
@@ -236,8 +238,13 @@ void hb_qtree_find_in_range(hb_qtree_t *t, MKMapRect range , void(^find)(id<MKAn
         
         self.tree = hb_qtree_new(MKMapRectWorld, CK_QTREE_STDCAP);
         
-        for (id<CKAnnotation> annotation in annotations) {
+        for (NSObject<CKAnnotation> *annotation in annotations) {
             hb_qtree_insert(self.tree, annotation);
+            
+            [annotation addObserver:self
+                         forKeyPath:NSStringFromSelector(@selector(coordinate))
+                            options:NSKeyValueObservingOptionNew
+                            context:CKQuadTreeKVOContext];
         }
     }
     return self;
@@ -245,6 +252,18 @@ void hb_qtree_find_in_range(hb_qtree_t *t, MKMapRect range , void(^find)(id<MKAn
 
 - (NSArray<id<CKAnnotation>> *)annotationsInRect:(MKMapRect)rect {
     NSMutableArray *results = [NSMutableArray new];
+    
+    // For map rects that span the 180th meridian, we get the portion outside the world.
+    if (MKMapRectSpans180thMeridian(rect)) {
+        
+        hb_qtree_find_in_range(self.tree, MKMapRectRemainder(rect), ^(id<CKAnnotation> annotation) {
+            if (!self->_responds || [self.delegate annotationTree:self shouldExtractAnnotation:annotation]) {
+                [results addObject:annotation];
+            }
+        });
+        
+        rect = MKMapRectIntersection(rect, MKMapRectWorld);
+    }
     
     hb_qtree_find_in_range(self.tree, rect, ^(id<CKAnnotation> annotation) {
         if (!self->_responds || [self.delegate annotationTree:self shouldExtractAnnotation:annotation]) {
@@ -263,7 +282,27 @@ void hb_qtree_find_in_range(hb_qtree_t *t, MKMapRect range , void(^find)(id<MKAn
 }
 
 - (void)dealloc {
+    for (NSObject<CKAnnotation> *annotation in self.annotations) {
+        [annotation removeObserver:self
+                        forKeyPath:NSStringFromSelector(@selector(coordinate))
+                           context:CKQuadTreeKVOContext];
+    }
+    
     hb_qtree_free(self.tree);
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+    
+    if (context == CKQuadTreeKVOContext) {
+        
+        if ([keyPath isEqualToString:NSStringFromSelector(@selector(coordinate))]) {
+            hb_qtree_remove(self.tree, object);
+            hb_qtree_insert(self.tree, object);
+        }
+        
+    } else {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
 }
 
 @end
