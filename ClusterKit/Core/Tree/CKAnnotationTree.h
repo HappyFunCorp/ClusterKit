@@ -44,7 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  @return Yes to permit the extraction of the given annotation.
  */
-- (BOOL)annotationTree:(id<CKAnnotationTree>)annotationTree shouldExtractAnnotation:(id<CKAnnotation>)annotation;
+- (BOOL)annotationTree:(id<MKAnnotation>)annotationTree shouldExtractAnnotation:(id<MKAnnotation>)annotation;
 
 @end
 
@@ -58,7 +58,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  The tree's annotation set.
  */
-@property (nonatomic,readonly) NSArray<id<CKAnnotation>> *annotations;
+@property (nonatomic,readonly) NSArray<id<MKAnnotation>> *annotations;
 
 /**
  Initializes a KPAnnotationTree object.
@@ -67,7 +67,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  @return The initialized KPAnnotationTree object.
  */
-- (instancetype)initWithAnnotations:(NSArray<id<CKAnnotation>> *)annotations;
+- (instancetype)initWithAnnotations:(NSArray<id<MKAnnotation>> *)annotations;
 
 /**
  Extracts annotations from a rect.
@@ -76,7 +76,7 @@ NS_ASSUME_NONNULL_BEGIN
  
  @return The annotation array.
  */
-- (NSArray<id<CKAnnotation>> *)annotationsInRect:(MKMapRect)rect;
+- (NSArray<id<MKAnnotation>> *)annotationsInRect:(MKMapRect)rect;
 
 @end
 
